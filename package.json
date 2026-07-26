@@ -1,0 +1,57 @@
+{
+  "name": "parmaconnect",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:push": "cd apps/web && npx prisma db push",
+    "db:migrate": "cd apps/web && npx prisma migrate dev",
+    "db:studio": "cd apps/web && npx prisma studio",
+    "db:seed": "cd apps/web && npx tsx prisma/seed.ts",
+    "db:generate": "cd apps/web && npx prisma generate",
+    "test": "turbo run test",
+    "test:e2e": "cd apps/web && npx playwright test",
+    "test:security": "turbo run test:security",
+    "test:update": "cd apps/web && npx playwright test --update",
+    "docker:dev": "docker compose -f docker/docker-compose.dev.yml up",
+    "docker:prod": "docker compose -f docker/docker-compose.prod.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.dev.yml down",
+    "docker:build": "docker compose build",
+    "security:check": "turbo run security:check",
+    "security:scan": "turbo run security:scan",
+    "healthcheck": "curl -f http://localhost:3000/api/health || exit 1",
+    "prepare": "husky install"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.3",
+    "@commitlint/config-conventional": "^19.0.3",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "turbo": "^2.0.0",
+    "typescript": "^5.6.3"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
+}

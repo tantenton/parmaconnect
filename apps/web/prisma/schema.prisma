@@ -1,0 +1,1070 @@
+// ParmaConnect Core Data Model
+// Multi-tenant community management platform
+// All data is scoped to a Community (tenant root)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// Community (tenant)
+// ─────────────────────────────────────────────
+model Community {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  name         String
+  shortName    String?
+  parentArea   String?
+  address      String?
+  timezone     String          @default("Asia/Jakarta")
+  locale       String          @default("id-ID")
+  currency     String          @default("IDR")
+  status       CommunityStatus @default(ACTIVE)
+  branding     Json?
+  moduleConfig Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  blocks              ResidentialBlock[]
+  units               ResidentialUnit[]
+  households          Household[]
+  users               User[]
+  residents           Resident[]
+  documents           ResidentDocument[]
+  announcements       Announcement[]
+  reports             Report[]
+  events              Event[]
+  contacts            ImportantContact[]
+  vehicles            Vehicle[]
+  feeTypes            FeeType[]
+  billingRules        BillingRule[]
+  billingPeriods      BillingPeriod[]
+  invoices            Invoice[]
+  payments            Payment[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+  visitors            Visitor[]
+  packages            Package[]
+  securityEvents      SecurityEvent[]
+  cameras             Camera[]
+  informationPages    InformationPage[]
+  governanceDocs      GovernanceDocument[]
+  billingDefaults     BillingDefaultConfig?
+}
+
+enum CommunityStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+// ─────────────────────────────────────────────
+// Auth / Users
+// ─────────────────────────────────────────────
+model User {
+  id            String     @id @default(cuid())
+  communityId   String
+  email         String
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  role          Role       @default(RESIDENT)
+  status        UserStatus @default(ACTIVE)
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  community   Community    @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  resident    Resident?
+  sessions    Session[]
+  auditLogs   AuditLog[]
+  notifications Notification[]
+
+  // reverse relations for staff actions
+  createdAnnouncements   Announcement[]      @relation("AnnouncementAuthor")
+  verifiedDocuments      ResidentDocument[]  @relation("DocumentVerifier")
+  reportedReports        Report[]            @relation("ReportReporter")
+  assignedReports        Report[]            @relation("ReportAssignee")
+  reportTimelineEntries  ReportTimeline[]
+  organizedEvents        Event[]             @relation("EventOrganizer")
+  eventAttendances       EventAttendee[]
+  announcementReads      AnnouncementRead[]
+
+  @@unique([communityId, email])
+  @@index([communityId, role])
+  @@index([email])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  DOCUMENT_ADMIN
+  FINANCE_ADMIN
+  SECURITY_OFFICER
+  STAFF
+  RESIDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionToken String   @unique
+  expires      DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionToken])
+}
+
+model PasswordResetToken {
+  id          String   @id @default(cuid())
+  communityId String
+  email       String
+  token       String   @unique
+  expires     DateTime
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email])
+}
+
+// ─────────────────────────────────────────────
+// Blocks & Units
+// ─────────────────────────────────────────────
+model ResidentialBlock {
+  id          String       @id @default(cuid())
+  communityId String
+  code        String
+  name        String
+  description String?
+  sortOrder   Int          @default(0)
+  status      EntityStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  community Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  units     ResidentialUnit[]
+
+  @@unique([communityId, code])
+  @@index([communityId])
+}
+
+model ResidentialUnit {
+  id              String          @id @default(cuid())
+  communityId     String
+  blockId         String
+  unitNumber      String
+  displayName     String?
+  occupancyStatus OccupancyStatus @default(UNCONFIRMED)
+  ownershipStatus OwnershipStatus @default(OWNER_OCCUPIED)
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  community  Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  block      ResidentialBlock  @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  households Household[]
+
+  @@unique([communityId, unitNumber])
+  @@index([communityId, blockId])
+}
+
+enum OccupancyStatus {
+  OWNER_OCCUPIED
+  TENANT_OCCUPIED
+  VACANT
+  RENOVATION
+  UNCONFIRMED
+}
+
+enum OwnershipStatus {
+  OWNER_OCCUPIED
+  TENANT_OCCUPIED
+  VACANT
+  RENOVATION
+  UNCONFIRMED
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+// ─────────────────────────────────────────────
+// Households & Residents
+// ─────────────────────────────────────────────
+model Household {
+  id                       String             @id @default(cuid())
+  communityId              String
+  residentialUnitId        String
+  householdNumber          String
+  occupancyType            OccupancyType      @default(OWNER_OCCUPIED)
+  startDate                DateTime           @default(now())
+  endDate                  DateTime?
+  status                   HouseholdStatus    @default(ACTIVE)
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  verificationStatus       VerificationStatus @default(UNREGISTERED)
+  headResidentId           String?
+  primaryContactResidentId String?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  community  Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  unit       ResidentialUnit @relation(fields: [residentialUnitId], references: [id], onDelete: Cascade)
+  residents  Resident[]
+  documents  ResidentDocument[]
+  vehicles   Vehicle[]
+  invoices   Invoice[]
+  payments   Payment[]
+  visitors   Visitor[]
+  packages   Package[]
+  auditLogs  AuditLog[]
+
+  @@unique([communityId, householdNumber])
+  @@index([communityId, residentialUnitId])
+  @@index([communityId, verificationStatus])
+}
+
+enum OccupancyType {
+  OWNER_OCCUPIED
+  TENANT_OCCUPIED
+}
+
+enum HouseholdStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum VerificationStatus {
+  UNREGISTERED
+  DRAFT
+  SUBMITTED
+  NEEDS_REVISION
+  VERIFIED
+  REJECTED
+  INACTIVE
+}
+
+model Resident {
+  id                 String         @id @default(cuid())
+  communityId        String
+  householdId        String?
+  userId             String?        @unique
+  fullName           String
+  familyRelationship String?
+  gender             Gender?
+  birthPlace         String?
+  birthDate          DateTime?
+  phone              String?
+  email              String?
+  residentStatus     ResidentStatus @default(ACTIVE)
+  moveInDate         DateTime?
+  moveOutDate        DateTime?
+  isPrimaryContact   Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  community         Community                  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household         Household?                 @relation(fields: [householdId], references: [id], onDelete: SetNull)
+  user              User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sensitiveIdentity ResidentSensitiveIdentity?
+  documents         ResidentDocument[]
+  vehicles          Vehicle[]
+
+  @@index([communityId, householdId])
+  @@index([userId])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  NOT_SPECIFIED
+}
+
+enum ResidentStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+// Sensitive identity stored separately — never returned by ordinary list endpoints
+model ResidentSensitiveIdentity {
+  residentId                String   @id
+  encryptedNik              String?
+  maskedNik                 String?
+  encryptedFamilyCardNumber String?
+  maskedFamilyCardNumber    String?
+  updatedAt                 DateTime @updatedAt
+
+  resident Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// Documents
+// ─────────────────────────────────────────────
+model ResidentDocument {
+  id               String         @id @default(cuid())
+  communityId      String
+  householdId      String?
+  residentId       String?
+  documentType     DocumentType
+  storageKey       String         @unique
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+  checksum         String?
+  version          Int            @default(1)
+  status           DocumentStatus @default(DRAFT)
+  submittedById    String?
+  verifiedById     String?
+  verifiedAt       DateTime?
+  reviewNotes      String?
+  archivedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+  resident  Resident?  @relation(fields: [residentId], references: [id], onDelete: SetNull)
+  verifier  User?      @relation("DocumentVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([communityId, householdId])
+  @@index([communityId, status])
+  @@index([storageKey])
+}
+
+enum DocumentType {
+  FAMILY_CARD
+  IDENTITY_CARD
+  LEASE_AGREEMENT
+  RESIDENT_CONSENT
+  VEHICLE_DOCUMENT
+  OTHER
+}
+
+enum DocumentStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  NEEDS_REVISION
+  VERIFIED
+  REJECTED
+  ARCHIVED
+  EXPIRED
+}
+
+// ─────────────────────────────────────────────
+// Announcements
+// ─────────────────────────────────────────────
+model Announcement {
+  id            String                @id @default(cuid())
+  communityId   String
+  title         String
+  content       String
+  category      AnnouncementCategory
+  priority      AnnouncementPriority  @default(NORMAL)
+  status        AnnouncementStatus    @default(DRAFT)
+  startsAt      DateTime
+  expiresAt     DateTime?
+  audience      AnnouncementAudience  @default(ALL)
+  createdById   String
+  publishedAt   DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  community Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User              @relation("AnnouncementAuthor", fields: [createdById], references: [id])
+  reads     AnnouncementRead[]
+
+  @@index([communityId, status])
+  @@index([communityId, startsAt])
+}
+
+enum AnnouncementCategory {
+  GENERAL
+  SECURITY
+  CLEANLINESS
+  MAINTENANCE
+  EVENT
+  EMERGENCY
+}
+
+enum AnnouncementPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  EXPIRED
+  ARCHIVED
+}
+
+enum AnnouncementAudience {
+  ALL
+  RESIDENTS
+  STAFF
+  SECURITY
+  FINANCE
+  ADMINS
+}
+
+model AnnouncementRead {
+  id             String   @id @default(cuid())
+  announcementId String
+  userId         String
+  readAt         DateTime @default(now())
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId])
+}
+
+// ─────────────────────────────────────────────
+// Reports
+// ─────────────────────────────────────────────
+model Report {
+  id              String         @id @default(cuid())
+  communityId     String
+  title           String
+  description     String
+  category        ReportCategory
+  location        String?
+  priority        ReportPriority @default(MEDIUM)
+  status          ReportStatus   @default(NEW)
+  reporterId      String
+  assignedStaffId String?
+  resolution      String?
+  isPublic        Boolean        @default(false)
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  community     Community        @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  reporter      User             @relation("ReportReporter", fields: [reporterId], references: [id])
+  assignedStaff User?            @relation("ReportAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  timeline      ReportTimeline[]
+
+  @@index([communityId, status])
+  @@index([communityId, reporterId])
+  @@index([assignedStaffId])
+}
+
+enum ReportCategory {
+  SECURITY
+  WASTE
+  STREET_LIGHT
+  DRAINAGE
+  ROAD
+  COMMON_FACILITY
+  NOISE
+  ANIMAL
+  OTHER
+}
+
+enum ReportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ReportStatus {
+  NEW
+  VERIFIED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  REJECTED
+  DUPLICATE
+}
+
+model ReportTimeline {
+  id            String   @id @default(cuid())
+  reportId      String
+  action        String
+  performedById String
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  report      Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  performedBy User   @relation(fields: [performedById], references: [id])
+
+  @@index([reportId])
+}
+
+// ─────────────────────────────────────────────
+// Events
+// ─────────────────────────────────────────────
+model Event {
+  id          String      @id @default(cuid())
+  communityId String
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime
+  endsAt      DateTime
+  capacity    Int?
+  status      EventStatus @default(DRAFT)
+  organizerId String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  community Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  organizer User?           @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: SetNull)
+  attendees EventAttendee[]
+
+  @@index([communityId, startsAt])
+  @@index([communityId, status])
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  CANCELLED
+  COMPLETED
+}
+
+model EventAttendee {
+  id       String           @id @default(cuid())
+  eventId  String
+  userId   String
+  status   AttendanceStatus @default(CONFIRMED)
+  joinedAt DateTime         @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+enum AttendanceStatus {
+  CONFIRMED
+  ATTENDED
+  CANCELLED
+}
+
+// ─────────────────────────────────────────────
+// Contacts
+// ─────────────────────────────────────────────
+model ImportantContact {
+  id           String            @id @default(cuid())
+  communityId  String
+  category     ContactCategory
+  name         String
+  phone        String?
+  whatsapp     String?
+  availability String?
+  visibility   ContactVisibility @default(PUBLIC)
+  sortOrder    Int               @default(0)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, category])
+}
+
+enum ContactCategory {
+  SECURITY
+  MANAGEMENT
+  CLEANING
+  TECHNICIAN
+  AMBULANCE
+  POLICE
+  FIRE_DEPARTMENT
+  OTHER
+}
+
+enum ContactVisibility {
+  PUBLIC
+  RESIDENTS_ONLY
+  STAFF_ONLY
+  ADMIN_ONLY
+}
+
+// ─────────────────────────────────────────────
+// Vehicles
+// ─────────────────────────────────────────────
+model Vehicle {
+  id            String        @id @default(cuid())
+  communityId   String
+  householdId   String?
+  residentId    String?
+  licensePlate  String
+  vehicleType   VehicleType
+  brand         String?
+  model         String?
+  color         String?
+  stickerNumber String?
+  status        VehicleStatus @default(ACTIVE)
+  validFrom     DateTime
+  validUntil    DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+  resident  Resident?  @relation(fields: [residentId], references: [id], onDelete: SetNull)
+
+  @@index([communityId, licensePlate])
+  @@index([householdId])
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+  TRUCK
+  OTHER
+}
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
+// ─────────────────────────────────────────────
+// Billing
+// ─────────────────────────────────────────────
+model FeeType {
+  id          String   @id @default(cuid())
+  communityId String
+  code        String
+  name        String
+  description String?
+  isMandatory Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  community    Community     @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  billingRules BillingRule[]
+
+  @@unique([communityId, code])
+}
+
+model BillingRule {
+  id            String   @id @default(cuid())
+  communityId   String
+  feeTypeId     String
+  name          String
+  amount        Decimal  @db.Decimal(15, 2)
+  currency      String   @default("IDR")
+  generationDay Int      @default(1)
+  dueDay        Int      @default(10)
+  carryForward  Boolean  @default(true)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  community      Community       @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  feeType        FeeType         @relation(fields: [feeTypeId], references: [id])
+  billingPeriods BillingPeriod[]
+  invoices       Invoice[]
+
+  @@index([communityId, isActive])
+}
+
+model BillingPeriod {
+  id            String              @id @default(cuid())
+  communityId   String
+  billingRuleId String
+  year          Int
+  month         Int
+  startDate     DateTime
+  endDate       DateTime
+  status        BillingPeriodStatus @default(OPEN)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  community   Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  billingRule BillingRule @relation(fields: [billingRuleId], references: [id])
+  invoices    Invoice[]
+
+  @@unique([billingRuleId, year, month])
+  @@index([communityId, year, month])
+}
+
+enum BillingPeriodStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  communityId     String
+  householdId     String
+  billingRuleId   String?
+  billingPeriodId String?
+  invoiceNumber   String        @unique
+  status          InvoiceStatus @default(DRAFT)
+  issueDate       DateTime
+  dueDate         DateTime
+  subtotal        Decimal       @db.Decimal(15, 2)
+  totalAmount     Decimal       @db.Decimal(15, 2)
+  paidAmount      Decimal       @db.Decimal(15, 2) @default(0)
+  currency        String        @default("IDR")
+  paidAt          DateTime?
+  cancelledAt     DateTime?
+  waivedAt        DateTime?
+  waivedReason    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  community     Community            @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household     Household            @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  billingRule   BillingRule?         @relation(fields: [billingRuleId], references: [id], onDelete: SetNull)
+  billingPeriod BillingPeriod?       @relation(fields: [billingPeriodId], references: [id], onDelete: SetNull)
+  items         InvoiceItem[]
+  allocations   PaymentAllocation[]
+
+  // Prevent duplicate invoices for same household + period + rule
+  @@unique([householdId, billingRuleId, billingPeriodId])
+  @@index([communityId, status])
+  @@index([householdId, status])
+  @@index([dueDate])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+  WAIVED
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  description String
+  amount      Decimal  @db.Decimal(15, 2)
+  quantity    Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id                 String         @id @default(cuid())
+  communityId        String
+  householdId        String
+  paymentNumber      String         @unique
+  amount             Decimal        @db.Decimal(15, 2)
+  currency           String         @default("IDR")
+  provider           String? // mock | manual_transfer | midtrans | xendit
+  externalId         String?
+  status             PaymentStatus  @default(PENDING)
+  method             PaymentMethod?
+  proofOfTransferKey String?
+  recordedById       String?
+  recordedAt         DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  community   Community           @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household   Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  allocations PaymentAllocation[]
+
+  @@index([communityId, status])
+  @@index([householdId])
+  @@index([externalId])
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  QRIS
+  BANK_TRANSFER
+  MANUAL
+  CASH
+  OTHER
+}
+
+model PaymentAllocation {
+  id        String   @id @default(cuid())
+  paymentId String
+  invoiceId String
+  amount    Decimal  @db.Decimal(15, 2)
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@unique([paymentId, invoiceId])
+}
+
+model BillingDefaultConfig {
+  id                   String   @id @default(cuid())
+  communityId          String   @unique
+  defaultCurrency      String   @default("IDR")
+  defaultDueDay        Int      @default(10)
+  defaultGenerationDay Int      @default(1)
+  carryForward         Boolean  @default(true)
+  penaltyEnabled       Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────
+// Notifications
+// ─────────────────────────────────────────────
+model Notification {
+  id                String             @id @default(cuid())
+  communityId       String
+  userId            String
+  type              NotificationType
+  title             String
+  content           String
+  status            NotificationStatus @default(PENDING)
+  relatedEntityId   String?
+  relatedEntityType String?
+  failureReason     String?
+  sentAt            DateTime?
+  readAt            DateTime?
+  createdAt         DateTime           @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([communityId, createdAt])
+}
+
+enum NotificationType {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  PUSH
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  SKIPPED
+}
+
+// ─────────────────────────────────────────────
+// Audit Log (append-only from app workflows)
+// ─────────────────────────────────────────────
+model AuditLog {
+  id          String   @id @default(cuid())
+  communityId String
+  userId      String?
+  householdId String?
+  action      String
+  entityType  String
+  entityId    String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  household Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+
+  @@index([communityId, createdAt])
+  @@index([communityId, entityType, entityId])
+  @@index([userId])
+  @@index([action])
+}
+
+// ─────────────────────────────────────────────
+// Visitors & Packages
+// ─────────────────────────────────────────────
+model Visitor {
+  id                String        @id @default(cuid())
+  communityId       String
+  householdId       String?
+  name              String
+  licensePlate      String?
+  destinationUnitId String?
+  validFrom         DateTime
+  validUntil        DateTime
+  visitCode         String        @unique
+  checkInAt         DateTime?
+  checkOutAt        DateTime?
+  status            VisitorStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+
+  @@index([communityId, status])
+  @@index([visitCode])
+  @@index([validUntil])
+}
+
+enum VisitorStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  REJECTED
+}
+
+model Package {
+  id                String        @id @default(cuid())
+  communityId       String
+  householdId       String?
+  recipientName     String
+  residentialUnitId String?
+  courier           String?
+  arrivalAt         DateTime      @default(now())
+  pickupAt          DateTime?
+  status            PackageStatus @default(ARRIVED)
+  evidenceKey       String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  community Community  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  household Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
+
+  @@index([communityId, status])
+  @@index([householdId])
+}
+
+enum PackageStatus {
+  ARRIVED
+  NOTIFIED
+  PICKED_UP
+  RETURNED
+  EXPIRED
+}
+
+// ─────────────────────────────────────────────
+// Security / CCTV
+// ─────────────────────────────────────────────
+model Camera {
+  id          String       @id @default(cuid())
+  communityId String
+  cameraCode  String
+  name        String
+  location    String?
+  status      CameraStatus @default(OFFLINE)
+  lastSeenAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, cameraCode])
+}
+
+enum CameraStatus {
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+}
+
+model SecurityEvent {
+  id          String   @id @default(cuid())
+  communityId String
+  eventType   String
+  cameraId    String?
+  timestamp   DateTime
+  plate       String?
+  confidence  Float?
+  trackingId  String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, timestamp])
+  @@index([communityId, eventType])
+  @@index([plate])
+}
+
+// ─────────────────────────────────────────────
+// Information & Governance
+// ─────────────────────────────────────────────
+model InformationPage {
+  id          String             @id @default(cuid())
+  communityId String
+  slug        String
+  title       String
+  content     String
+  visibility  ContentVisibility  @default(PUBLIC)
+  sortOrder   Int                @default(0)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([communityId, slug])
+}
+
+model GovernanceDocument {
+  id             String            @id @default(cuid())
+  communityId    String
+  title          String
+  content        String
+  effectiveDate  DateTime
+  revisionNumber Int               @default(1)
+  visibility     ContentVisibility @default(PUBLIC)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@index([communityId])
+}
+
+enum ContentVisibility {
+  PUBLIC
+  RESIDENTS_ONLY
+  STAFF_ONLY
+  ADMIN_ONLY
+}

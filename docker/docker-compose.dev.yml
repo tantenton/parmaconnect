@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: parmaconnect-db
+    environment:
+      POSTGRES_DB: parmaconnect
+      POSTGRES_USER: parmaconnect
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-parmaconnect_dev_only}
+    ports:
+      - "5432:5432"
+    volumes:
+      - parmaconnect-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parmaconnect -d parmaconnect"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  parmaconnect-postgres:
+name: parmaconnect-dev
