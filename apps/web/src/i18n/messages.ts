@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 /**
  * Loads messages for a given locale synchronously.
  * Used in client components where async import is not available.

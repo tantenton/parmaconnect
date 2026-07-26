@@ -117,7 +117,7 @@ async function main() {
   });
   users.push(adminUser);
 
-  // Demo residents (password: DemoPassword123!)
+  // Demo residents (password: DevPassword123!)
   for (let i = 1; i <= 15; i++) {
     const u = await db.user.upsert({
       where: { communityId_email: { communityId: COMMUNITY_ID, email: `resident${i}@clusterparma.local` } },
@@ -133,7 +133,32 @@ async function main() {
     });
     users.push(u);
   }
-  console.log(`  Users: ${users.length} (1 admin + 15 residents)`);
+
+  // Demo accounts for all admin/staff roles (password: DevPassword123!)
+  const roleAccounts = [
+    { email: "superadmin@clusterparma.local", name: "Super Admin Parma", role: "SUPER_ADMIN" as const },
+    { email: "docadmin@clusterparma.local", name: "Dokumen Admin Parma", role: "DOCUMENT_ADMIN" as const },
+    { email: "finance@clusterparma.local", name: "Finance Admin Parma", role: "FINANCE_ADMIN" as const },
+    { email: "security@clusterparma.local", name: "Security Officer Parma", role: "SECURITY_OFFICER" as const },
+    { email: "staff@clusterparma.local", name: "Staf Parma", role: "STAFF" as const },
+  ];
+  for (const acct of roleAccounts) {
+    const u = await db.user.upsert({
+      where: { communityId_email: { communityId: COMMUNITY_ID, email: acct.email } },
+      update: {},
+      create: {
+        communityId: COMMUNITY_ID,
+        email: acct.email,
+        passwordHash,
+        name: acct.name,
+        role: acct.role,
+        status: "ACTIVE",
+        emailVerified: new Date(),
+      },
+    });
+    users.push(u);
+  }
+  console.log(`  Users: ${users.length} (all roles)`);
 
   // Households
   const households: Awaited<ReturnType<typeof db.household.create>>[] = [];
@@ -459,8 +484,11 @@ async function main() {
 
   // Visitors
   for (let i = 0; i < 3; i++) {
-    await db.visitor.create({
-      data: {
+    await db.visitor.upsert({
+      where: { id: `seed-visitor-${i}` },
+      update: {},
+      create: {
+        id: `seed-visitor-${i}`,
         communityId: COMMUNITY_ID,
         householdId: households[i]?.id,
         name: `Tamu Visita ${i + 1}`,
@@ -475,9 +503,14 @@ async function main() {
   }
   console.log("  Visitors: 3");
 
-  console.log("\nSeed complete. Demo credentials:");
-  console.log("  Admin:    admin@clusterparma.local / DevPassword123!");
-  console.log("  Resident: resident1@clusterparma.local / DevPassword123!");
+  console.log("\nSeed complete. Demo credentials (all passwords: DevPassword123!):");
+  console.log("  Super Admin:    superadmin@clusterparma.local");
+  console.log("  Admin:          admin@clusterparma.local");
+  console.log("  Doc Admin:      docadmin@clusterparma.local");
+  console.log("  Finance Admin:  finance@clusterparma.local");
+  console.log("  Security:       security@clusterparma.local");
+  console.log("  Staff:          staff@clusterparma.local");
+  console.log("  Residents:      resident1@clusterparma.local ... resident15@clusterparma.local");
 }
 
 main()

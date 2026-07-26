@@ -3,20 +3,18 @@
 ## Active Issues
 
 ### Issue 1: No GitHub Push Credentials
-**Status**: Open
-**Impact**: Changes committed locally cannot be pushed to GitHub.
-**Workaround**: Set GH_TOKEN env var or configure SSH key for GitHub.
-**Next step**: Configure GH_TOKEN or SSH key, then `git push origin main`.
+**Status**: Resolved ✓
+**Resolution**: SSH key configured, remote set to `git@github.com:tantenton/parmaconnect.git`. Push working.
 
 ### Issue 2: Migrations Not Applied
 **Status**: Resolved ✓
 **Impact**: N/A
-**Resolution**: Migrations verified in sync — `npx prisma migrate dev` confirmed "Already in sync, no schema change or pending migration".
+**Resolution**: Migrations verified in sync — `npx prisma migrate dev` confirmed "Already in sync".
 
 ### Issue 3: Seed Not Verified
 **Status**: Resolved ✓
 **Impact**: N/A
-**Resolution**: Seed runs successfully — 15 households, 16 users, 15 residents, announcements, events, contacts, vehicles, billing, invoices, reports, visitors seeded. Bugfix applied: changed `resident.create` to `resident.upsert` with deterministic IDs for idempotency.
+**Resolution**: Seed runs idempotently. Bugfixes applied: `resident.create` → `resident.upsert`, `visitor.create` → `visitor.upsert`. Demo accounts for all 7 roles added.
 
 ### Issue 4: No CI/CD for Deployment
 **Status**: Open
@@ -25,17 +23,31 @@
 **Next step**: Add deployment workflow when environment is available.
 
 ### Issue 5: Limited Test Coverage
-**Status**: Open
-**Impact**: Only utility functions have unit tests. No auth/authz/domain tests yet.
+**Status**: Open — improving
+**Impact**: Auth tests (17) and utils tests (6) written. No domain CRUD tests yet.
 **Workaround**: Manual verification during development.
-**Next step**: Add tests in each milestone.
+**Next step**: Add domain tests in each milestone.
 
 ### Issue 6: No GitHub Secrets for CI
 **Status**: Open
 **Impact**: CI workflow cannot access production or staging environments.
 **Workaround**: CI only verifies build/test/lint.
-**Next step**: Configure secrets when GitHub remote is available.
+**Next step**: Configure secrets when production environment is available.
+
+### Issue 7: Middleware Deprecated in Next.js 16
+**Status**: Open
+**Impact**: Build passes but with deprecation warning. `middleware.ts` should be migrated to `proxy` pattern.
+**Workaround**: Current middleware works but logged as deprecated.
+**Next step**: Migrate to proxy when available in Next.js 16 stable.
+
+### Issue 8: No Password Reset Email Flow
+**Status**: Open
+**Impact**: PasswordResetToken model exists but no email sending implemented.
+**Workaround**: Manual password reset via DB for now.
+**Next step**: Implement email service and password reset UI.
 
 ## Resolved Issues
+- Issue 1 — No GitHub Push Credentials: ✅ Resolved (SSH configured)
 - Issue 2 — Migrations Not Applied: ✅ Resolved
-- Issue 3 — Seed Not Verified: ✅ Resolved (bugfix applied)
+- Issue 3 — Seed Not Verified: ✅ Resolved (bugfixes applied)
+- All seed resources idempotent: ✅ upsert used for Community, Blocks, Units, Users, Households, Residents, Vehicles, Visitors
