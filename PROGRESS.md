@@ -29,8 +29,8 @@
 - `08ed0c0` — docs: update PROGRESS.md and KNOWN_ISSUES.md
 
 ### Push Status
-- Remote: https://github.com/tantenton/parmaconnect.git
-- Push: **BLOCKED** — no GitHub credentials
+- Remote: git@github.com:tantenton/parmaconnect.git
+- Pushed: ✅ `git push origin main` — 3 commits on main, up to date
 
 ---
 
