@@ -1,0 +1,9 @@
+RUN_STATUS: PARTIALLY_COMPLETED
+LAST_COMPLETED_MILESTONE: 4 — Households and Residents
+CURRENT_MILESTONE: 5 — Private Resident Document Archive
+LAST_COMMIT: pending
+PUSH_STATUS: pending Milestone 4 commit
+TEST_STATUS: 43/43 passed
+BUILD_STATUS: passed (23 routes)
+KNOWN_BLOCKER: none
+NEXT_ACTION: commit and push Milestone 4, then implement Milestone 5

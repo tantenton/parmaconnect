@@ -87,5 +87,32 @@
 - No bulk import/export for blocks or units
 - No unit map or visual block layout
 
-### Next Milestone
 ## Milestone 4 — Households and Residents
+
+**Status:** ✅ Complete
+
+### Completed Features
+- Centralized household verification transition policy
+- Admin household list with search, verification/status filters, pagination
+- Household create/detail/deactivate flows with preserved history
+- Duplicate active occupancy prevention
+- Household head and primary-contact membership validation
+- Resident add/update/move-out operations
+- Moved-out residents become inactive with move-out timestamp
+- Admin verification, revision, rejection, resubmission flows
+- Resident self-service own-household page
+- Resident family-member creation and verification submission
+- Community and household authorization scoping
+- Security-officer response redaction
+- Audit entries for household/resident changes
+
+### Verification
+- [x] TypeScript passes
+- [x] ESLint passes (0 errors; 2 non-blocking redaction warnings)
+- [x] Vitest passes (43/43)
+- [x] Next.js build passes (23 routes)
+- [x] Prisma validation/migration status passes
+- [x] Authorization and transition tests pass
+
+### Next Milestone
+## Milestone 5 — Private Resident Document Archive
