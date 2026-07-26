@@ -51,3 +51,8 @@
 **Decision**: Module flags control which features are visible. Security controls are always-on (not disableable).
 **Rationale**: Allows communities to opt out of features without forking code. Security cannot be casually disabled.
 **Status**: Accepted
+
+### AD-011: Block and Unit Archive Safety
+**Decision**: Blocks with occupied units cannot be archived. API checks unit occupancy before allowing archive.
+**Rationale**: Prevents accidental data loss. Blocks can only be archived when all units are vacant/unconfirmed.
+**Status**: Accepted
