@@ -2,23 +2,21 @@
 
 ## Active Issues
 
-### Issue 1: No Git Remote
+### Issue 1: No GitHub Push Credentials
 **Status**: Open
-**Impact**: Changes cannot be pushed to GitHub.
-**Workaround**: Work locally, push when remote is configured.
-**Next step**: Configure remote after initial commit.
+**Impact**: Changes committed locally cannot be pushed to GitHub.
+**Workaround**: Set GH_TOKEN env var or configure SSH key for GitHub.
+**Next step**: Configure GH_TOKEN or SSH key, then `git push origin main`.
 
 ### Issue 2: Migrations Not Applied
-**Status**: Open
-**Impact**: Database schema exists in Prisma schema but not in live PostgreSQL.
-**Workaround**: Run `npx prisma migrate dev` manually.
-**Next step**: Apply migrations during development.
+**Status**: Resolved ✓
+**Impact**: N/A
+**Resolution**: Migrations verified in sync — `npx prisma migrate dev` confirmed "Already in sync, no schema change or pending migration".
 
 ### Issue 3: Seed Not Verified
-**Status**: Open
-**Impact**: Seed script has been written but not run against live database.
-**Workaround**: Run `pnpm db:seed` manually.
-**Next step**: Verify seed during development.
+**Status**: Resolved ✓
+**Impact**: N/A
+**Resolution**: Seed runs successfully — 15 households, 16 users, 15 residents, announcements, events, contacts, vehicles, billing, invoices, reports, visitors seeded. Bugfix applied: changed `resident.create` to `resident.upsert` with deterministic IDs for idempotency.
 
 ### Issue 4: No CI/CD for Deployment
 **Status**: Open
@@ -39,5 +37,5 @@
 **Next step**: Configure secrets when GitHub remote is available.
 
 ## Resolved Issues
-
-None yet.
+- Issue 2 — Migrations Not Applied: ✅ Resolved
+- Issue 3 — Seed Not Verified: ✅ Resolved (bugfix applied)

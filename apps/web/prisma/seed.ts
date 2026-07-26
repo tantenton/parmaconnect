@@ -164,15 +164,18 @@ async function main() {
   for (let i = 0; i < households.length; i++) {
     const hh = households[i];
     const user = users[i + 1];
-    const r = await db.resident.create({
-      data: {
+    const r = await db.resident.upsert({
+      where: { id: `seed-resident-${i}` },
+      update: {},
+      create: {
+        id: `seed-resident-${i}`,
         communityId: COMMUNITY_ID,
         householdId: hh.id,
         userId: user?.id,
         fullName: user?.name ?? `Warga Parma ${i + 1}`,
         familyRelationship: i === 0 ? "KEPALA_KELUARGA" : i < 3 ? "ISTRI" : "ANAK",
         gender: i % 2 === 0 ? "MALE" : "FEMALE",
-        phone: `+6281234567${String(i).padStart(3, "0")}`,
+        phone: `+628****4567${String(i).padStart(3, "0")}`,
         email: user?.email,
         residentStatus: "ACTIVE",
         isPrimaryContact: i === 0,
