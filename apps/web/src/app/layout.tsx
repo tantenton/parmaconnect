@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
+import { ConfigProvider } from "@/providers/config-provider";
+import { loadCommunityConfig } from "@/lib/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,21 +17,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ParmaConnect — Cluster Parma",
+  title: "ParmaConnect — Platform Manajemen Komunitas",
   description: "Platform manajemen komunitas untuk Cluster Parma, Mutiara Columbus",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const config = await loadCommunityConfig();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ConfigProvider config={config}>
+            {children}
+          </ConfigProvider>
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }

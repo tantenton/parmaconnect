@@ -1,0 +1,83 @@
+{
+  "common": {
+    "appName": "ParmaConnect",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "close": "Close",
+    "noData": "No data",
+    "retry": "Retry",
+    "logout": "Logout",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "landing": {
+    "title": "Welcome to {communityName}",
+    "subtitle": "Community management platform for {parentArea}",
+    "exploreFeatures": "Explore Features",
+    "features": {
+      "info": {
+        "title": "Community Information",
+        "description": "Announcements, event schedules, important contacts, and governance documents."
+      },
+      "report": {
+        "title": "Resident Reports",
+        "description": "Report security, cleanliness, or facility issues easily."
+      },
+      "billing": {
+        "title": "Monthly Billing",
+        "description": "View and pay monthly fees, payment history, and overdue bills."
+      },
+      "vehicles": {
+        "title": "Vehicles & Visitors",
+        "description": "Register vehicles and pre-register visitors."
+      },
+      "documents": {
+        "title": "Document Archive",
+        "description": "Upload and manage resident documents securely."
+      },
+      "security": {
+        "title": "Security",
+        "description": "Security portal for monitoring and visitor tracking."
+      }
+    },
+    "footer": {
+      "copyright": "© {year} {appName}",
+      "tagline": "{communityName} — {parentArea}"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "announcements": "Announcements",
+    "reports": "Reports",
+    "events": "Events",
+    "contacts": "Contacts",
+    "vehicles": "Vehicles",
+    "documents": "Documents",
+    "billing": "Billing",
+    "household": "Household",
+    "residents": "Residents",
+    "admin": "Admin",
+    "settings": "Settings"
+  }
+}

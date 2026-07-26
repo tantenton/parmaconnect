@@ -24,60 +24,58 @@
 - Root documentation: README, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, LICENSE, CHANGELOG
 - docs/: architecture, development, deployment-vps, security, data-model, roadmap
 
-### Functional Verification
-- [x] TypeScript passes (tsc --noEmit)
-- [x] ESLint passes
-- [x] Vitest passes (6/6 tests)
-- [x] Next.js build passes
-- [x] Prisma schema validates
-- [x] Docker Compose validates
-- [x] Health endpoint responds 200
-- [x] Database migration verified (already synced)
-- [x] Seed script verified (15 households, 16 users, 15 residents, full synthetic data)
-- [x] Dev server starts and health check passes
-
-### Tests Run
-- `npx tsc --noEmit` — PASS
-- `npx eslint .` — PASS
-- `npx vitest run` — 6 passed
-- `npx next build` — PASS
-- `npx prisma validate` — PASS
-- Docker Compose validation — PASS
-- `npx prisma migrate dev` — already in sync, no pending migrations
-- `npx tsx prisma/seed.ts` — PASS (15 households seeded)
-
-### Security Checks Run
-- Sensitive data redaction in logger: configured (NIK, family card, passwords, tokens)
-- No real secrets in repo: verified (only .env.example has defaults)
-- No real resident data: verified (all seed data is synthetic)
-
 ### Commits
-- `5edc0bc` — feat: initial scaffold — Next.js 16, Prisma 7, full domain model
+- `5edc0bc` — feat: initial scaffold
+- `08ed0c0` — docs: update PROGRESS.md and KNOWN_ISSUES.md
 
 ### Push Status
-- Remote configured: https://github.com/tantenton/parmaconnect.git
-- Push: **FAILED** — no GitHub credentials available (no token, no SSH key, no gh CLI)
-- Requires: GH_TOKEN or SSH key setup to push
+- Remote: https://github.com/tantenton/parmaconnect.git
+- Push: **BLOCKED** — no GitHub credentials
 
-### Known Limitations
-- Unit tests only cover utility functions (not yet auth, authz, domain logic)
-- E2E tests need dev server running (not yet automated)
-- No CI/CD for actual deployment (only verification)
-- Push blocked — no GitHub auth configured
+---
 
-### External Blockers
-- **Blocker: No GitHub push credentials** — remote URL exists but `git push` fails with "No such device or address". User must provide GH_TOKEN or SSH key for push.
-
-### Next Milestone
 ## Milestone 1 — Configuration and Design System
 
-### Status: Not Started
+### Status: ✅ Complete
+
+### Completed Features
+- DB-backed community config service (`src/lib/config.ts`) — reads community from DB with fallback to `defaultCommunityConfig`
+- `loadCommunityConfig()` — merges DB branding/moduleConfig JSON with Zod-validated defaults
+- `getCommunityConfigCached()` — request-scoped cache for server components
+- ConfigProvider React context (`src/providers/config-provider.tsx`) with `useCommunityConfig()` hook
+- i18n foundation with next-intl:
+  - `i18n/config.ts` — locale config (id-ID primary, en fallback)
+  - `i18n/request.ts` — next-intl request config
+  - `i18n/messages.ts` — message loader
+  - `messages/id.json` — full Indonesian translations
+  - `messages/en.json` — full English translations
+  - Root layout wrapped with `NextIntlClientProvider` + `ConfigProvider`
+- Reusable UI components library (`src/components/ui/`):
+  - Button (variants: default, destructive, outline, secondary, ghost, link; sizes: default, sm, lg, icon)
+  - Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent
+  - Input
+  - Badge (variants: default, secondary, destructive, outline, success, warning)
+  - Skeleton (loading placeholder)
+  - Barrel export from `index.ts`
+- Landing page updated to use i18n translations + config context + new Card components
+
+### Functional Verification
+- [x] TypeScript passes (tsc --noEmit)
+- [x] Vitest passes (6/6 tests)
+- [x] Next.js build passes (3 routes: /, /_not-found, /api/health)
+- [x] Prisma schema validates
+- [x] DB community config service loads without errors
+
+### Next Milestone
+## Milestone 2 — Auth, Users, Roles, Audit
+
+### Status: Pending
 
 Goals:
-1. Refine community config readable from DB (not just hardcoded defaults)
-2. Create reusable UI component system (shadcn/ui style)
-3. Set up i18n foundation (next-intl or similar)
-4. Create auth service (login, register, session, password reset, middleware)
-5. Create admin layout shell
-6. Create resident portal layout shell
-7. Write unit + integration tests for auth and config
+1. Auth service (login, register, session, JWT, password reset)
+2. Auth middleware (protect routes, session validation)
+3. User management (CRUD, roles, status)
+4. Audit logging service
+5. Login page (/auth/login)
+6. Register page (/auth/register)
+7. Auth tests (unit + integration)

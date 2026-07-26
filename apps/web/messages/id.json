@@ -1,0 +1,83 @@
+{
+  "common": {
+    "appName": "ParmaConnect",
+    "loading": "Memuat...",
+    "error": "Terjadi kesalahan",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "create": "Buat",
+    "search": "Cari",
+    "filter": "Filter",
+    "back": "Kembali",
+    "next": "Selanjutnya",
+    "confirm": "Konfirmasi",
+    "close": "Tutup",
+    "noData": "Tidak ada data",
+    "retry": "Coba lagi",
+    "logout": "Keluar",
+    "profile": "Profil",
+    "settings": "Pengaturan"
+  },
+  "landing": {
+    "title": "Selamat Datang di {communityName}",
+    "subtitle": "Platform manajemen komunitas untuk {parentArea}",
+    "exploreFeatures": "Jelajahi Fitur",
+    "features": {
+      "info": {
+        "title": "Informasi Komunitas",
+        "description": "Pengumuman, jadwal acara, kontak penting, dan dokumen tata kelola."
+      },
+      "report": {
+        "title": "Laporan Warga",
+        "description": "Laporkan masalah keamanan, kebersihan, atau fasilitas umum dengan mudah."
+      },
+      "billing": {
+        "title": "Tagihan Bulanan",
+        "description": "Lihat dan bayar iuran bulanan, riwayat pembayaran, dan tagihan tertunggak."
+      },
+      "vehicles": {
+        "title": "Kendaraan & Tamu",
+        "description": "Daftarkan kendaraan dan daftarkan tamu sebelum berkunjung."
+      },
+      "documents": {
+        "title": "Arsip Dokumen",
+        "description": "Unggah dan kelola dokumen warga dengan aman dan terenkripsi."
+      },
+      "security": {
+        "title": "Keamanan",
+        "description": "Portal keamanan untuk memantau lingkungan dan kunjungan tamu."
+      }
+    },
+    "footer": {
+      "copyright": "© {year} {appName}",
+      "tagline": "{communityName} — {parentArea}"
+    }
+  },
+  "auth": {
+    "login": "Masuk",
+    "register": "Daftar",
+    "email": "Email",
+    "password": "Kata Sandi",
+    "forgotPassword": "Lupa Kata Sandi?",
+    "resetPassword": "Atur Ulang Kata Sandi",
+    "noAccount": "Belum punya akun?",
+    "hasAccount": "Sudah punya akun?"
+  },
+  "nav": {
+    "home": "Beranda",
+    "dashboard": "Dasbor",
+    "announcements": "Pengumuman",
+    "reports": "Laporan",
+    "events": "Acara",
+    "contacts": "Kontak",
+    "vehicles": "Kendaraan",
+    "documents": "Dokumen",
+    "billing": "Tagihan",
+    "household": "Keluarga",
+    "residents": "Warga",
+    "admin": "Admin",
+    "settings": "Pengaturan"
+  }
+}
