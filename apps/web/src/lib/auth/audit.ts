@@ -41,7 +41,10 @@ export type AuditEntityType =
   | "VEHICLE"
   | "VISITOR"
   | "EVENT"
-  | "ANNOUNCEMENT";
+  | "ANNOUNCEMENT"
+  | "CONTACT"
+  | "INFO_PAGE"
+  | "GOVERNANCE";
 
 export async function createAuditLog(params: {
   communityId: string;

@@ -88,14 +88,16 @@ model User {
   notifications Notification[]
 
   // reverse relations for staff actions
-  createdAnnouncements   Announcement[]      @relation("AnnouncementAuthor")
-  verifiedDocuments      ResidentDocument[]  @relation("DocumentVerifier")
-  reportedReports        Report[]            @relation("ReportReporter")
-  assignedReports        Report[]            @relation("ReportAssignee")
+  createdAnnouncements   Announcement[]  @relation("AnnouncementAuthor")
+  verifiedDocuments    ResidentDocument[]  @relation("DocumentVerifier")
+reportedReports        Report[]            @relation("ReportReporter")
+  assignedReports        Report[]      @relation("ReportAssignee")
   reportTimelineEntries  ReportTimeline[]
-  organizedEvents        Event[]             @relation("EventOrganizer")
+  organizedEvents        Event[] @relation("EventOrganizer")
   eventAttendances       EventAttendee[]
   announcementReads      AnnouncementRead[]
+  publishedInfoPages     InformationPage[]   @relation("InfoPagePublisher")
+  publishedGovernanceRecords GovernanceDocument[] @relation("GovernancePublisher")
 
   @@unique([communityId, email])
   @@index([communityId, role])
@@ -1033,35 +1035,70 @@ model SecurityEvent {
 // Information & Governance
 // ─────────────────────────────────────────────
 model InformationPage {
-  id          String             @id @default(cuid())
-  communityId String
-  slug        String
-  title       String
-  content     String
-  visibility  ContentVisibility  @default(PUBLIC)
-  sortOrder   Int                @default(0)
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id   String            @id @default(cuid())
+  communityId   String
+  slug          String
+  title    String
+  content       String       @db.Text
+  category      String?
+  status    InfoPageStatus    @default(DRAFT)
+  effectiveDate DateTime?
+  publishedAt   DateTime?
+  publishedById String?
+  visibility    ContentVisibility @default(PUBLIC)
+  sortOrder     Int   @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime       @updatedAt
 
-  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  publishedBy User?     @relation("InfoPagePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
 
   @@unique([communityId, slug])
+  @@index([communityId, status])
+}
+
+enum InfoPageStatus {
+DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 model GovernanceDocument {
-  id             String            @id @default(cuid())
+  id    String      @id @default(cuid())
   communityId    String
   title          String
-  content        String
+  content     String       @db.Text
+  type           GovernanceType        @default(MINUTES)
   effectiveDate  DateTime
-  revisionNumber Int               @default(1)
-  visibility     ContentVisibility @default(PUBLIC)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  supersededById String?
+  approvalStatus ApprovalStatus        @default(DRAFT)
+  publishedAt    DateTime?
+  publishedById  String?
+  revisionNumber Int         @default(1)
+  visibility     ContentVisibility     @default(PUBLIC)
+  createdAt      DateTime       @default(now())
+updatedAt      DateTime    @updatedAt
 
-  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  community    Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  publishedBy  User?      @relation("GovernancePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  supersededBy GovernanceDocument? @relation("GovernanceSupersession", fields: [supersededById], references: [id], onDelete: SetNull)
+  supersedes   GovernanceDocument[] @relation("GovernanceSupersession")
 
-  @@index([communityId])
+  @@index([communityId, type])
+  @@index([communityId, effectiveDate])
+}
+
+enum GovernanceType {
+  MINUTES
+  DECISION
+  POLICY
+}
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum ContentVisibility {
