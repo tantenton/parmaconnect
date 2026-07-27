@@ -382,20 +382,22 @@ enum DocumentStatus {
 // Announcements
 // ─────────────────────────────────────────────
 model Announcement {
-  id            String                @id @default(cuid())
-  communityId   String
-  title         String
-  content       String
-  category      AnnouncementCategory
-  priority      AnnouncementPriority  @default(NORMAL)
-  status        AnnouncementStatus    @default(DRAFT)
-  startsAt      DateTime
-  expiresAt     DateTime?
-  audience      AnnouncementAudience  @default(ALL)
-  createdById   String
-  publishedAt   DateTime?
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
+  id             String                @id @default(cuid())
+  communityId    String
+  title          String
+  content        String
+  category       AnnouncementCategory
+  priority       AnnouncementPriority  @default(NORMAL)
+  status         AnnouncementStatus    @default(DRAFT)
+  startsAt       DateTime
+  expiresAt      DateTime?
+  audience       AnnouncementAudience  @default(ALL)
+  targetBlockIds Json?
+  attachmentMeta Json?
+  createdById    String
+  publishedAt    DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
 
   community Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
   author    User              @relation("AnnouncementAuthor", fields: [createdById], references: [id])

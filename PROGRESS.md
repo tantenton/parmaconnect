@@ -116,3 +116,78 @@
 
 ### Next Milestone
 ## Milestone 5 — Private Resident Document Archive
+
+**Status:** ✅ Complete
+**Commit:** `6939477`
+**Push:** ✅ `git push origin main`
+
+### Completed Features
+- StorageProvider interface with LocalStorageProvider implementation
+- Randomized (Crypto-random) storage keys — non-guessable, original filename excluded from path
+- Upload: MIME validation, extension validation, 10MB size limit
+- List with filter by document type, status, pagination
+- Get metadata with role-based access control
+- Verify workflow for doc admins (VERIFIED/REJECTED/NEEDS_REVISION)
+- Security officers and finance admins blocked from FAMILY_CARD and IDENTITY_CARD
+- Revision request workflow
+- Archive with status transition enforcement
+- Centralized verification transition policy (DRAFT→SUBMITTED→UNDER_REVIEW→VERIFIED)
+- Community-scoped access — resident sees only own household docs
+- Audit entries for upload, view, download, verify, revision, archive
+- No document content in logs
+- No document content in analytics
+
+### Verification
+- [x] TypeScript passes
+- [x] ESLint passes (0 errors)
+- [x] Vitest 43/43 passing
+- [x] Next.js build (25 routes)
+- [x] Authorization scoping enforced server-side
+
+### Next Milestone
+## Milestone 6 — Resident Dashboard and Announcements
+
+
+## Milestone 6 — Resident Dashboard and Announcements
+
+**Status:** ✅ Complete
+
+### Completed Features
+- Resident dashboard with real database-backed data (community, household, documents, reports, events, contacts)
+- Urgent announcement banner (EMERGENCY/URGENT priority)
+- Latest announcements with read/unread tracking
+- Household verification status and data completion summary
+- Document completion and verification status
+- Active resident reports count
+- Next event display
+- Important contacts list
+- Quick action links
+- Empty states when no data exists
+
+Announcement system:
+- Full lifecycle: DRAFT → SCHEDULED → PUBLISHED → EXPIRED → ARCHIVED
+- Categories: GENERAL, SECURITY, CLEANLINESS, MAINTENANCE, EVENT, EMERGENCY
+- Priorities: LOW, NORMAL, HIGH, URGENT
+- Audience targeting: ALL, RESIDENTS, STAFF, SECURITY, FINANCE, ADMINS
+- Block-level targeting via targetBlockIds
+- Start/expiry date enforcement (scheduled hidden early, expired hidden)
+- Read tracking per user (AnnouncementRead model)
+- Admin announcement CRUD with publish/unpublish/expire/archive actions
+- Admin announcement list with status/category filters and read statistics
+- Resident announcement list with category filter
+- Resident announcement detail with auto read-marking
+- Server-side audience and block targeting enforcement
+- Audit entries for all announcement actions
+
+### Verification
+- [x] TypeScript passes
+- [x] ESLint passes (0 errors, 14 warnings)
+- [x] Vitest 71/71 passing (28 new announcement tests)
+- [x] Next.js build (27 routes)
+- [x] Prisma migration applied (targetBlockIds, attachmentMeta)
+- [x] Visibility rules enforced server-side
+- [x] Audience restrictions enforced server-side
+- [x] Block targeting enforced server-side
+
+### Next Milestone
+## Milestone 7 — Resident Reports and Staff Tasks
