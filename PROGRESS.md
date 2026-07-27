@@ -2,7 +2,7 @@
 
 ## Milestone 0 — Repository Foundation
 **Status:** ✅ Complete
-**Commits:** `5edc0bc`, `08ed0c0`
+**Commits:** `5edc0bc`, `08edc0c`
 
 ## Milestone 1 — Configuration and Design System
 **Status:** ✅ Complete
@@ -19,7 +19,7 @@
 **Status:** ✅ Complete
 
 ### Commit
-- `a2582a9` — feat: Milestone 3 — Community, Blocks, Residential Units
+- `a2582a9` — feat: Milestone 3 — Community, Blocks, Residential Units (rebased to `b3671b2`)
 
 ### Completed Features
 
@@ -147,9 +147,6 @@
 ### Next Milestone
 ## Milestone 6 — Resident Dashboard and Announcements
 
-
-## Milestone 6 — Resident Dashboard and Announcements
-
 **Status:** ✅ Complete
 
 ### Completed Features
@@ -190,4 +187,190 @@ Announcement system:
 - [x] Block targeting enforced server-side
 
 ### Next Milestone
+
+---
+
 ## Milestone 7 — Resident Reports and Staff Tasks
+
+**Status:** ✅ Complete
+
+**Commit:** `a0722ed`
+
+### Completed Features
+
+**Report model & API**
+- Report model with categories: SECURITY, WASTE, STREET_LIGHT, DRAINAGE, ROAD, COMMON_FACILITY, NOISE, ANIMAL, OTHER
+- Priorities: LOW, MEDIUM, HIGH, URGENT
+- Status lifecycle: NEW → VERIFIED → ASSIGNED → IN_PROGRESS → RESOLVED → CLOSED, plus REJECTED/DUPLICATE
+- Centralized transition validation (assertTransition in report-service)
+- ReportTimeline model tracks all actions with performer and notes
+- API: `GET /api/reports`, `POST /api/reports`, `GET /api/reports/[id]`
+- API: `GET /api/admin/reports`, `PATCH /api/admin/reports/[id]` (admin operations)
+- Filter by category, status, priority, reporter; pagination
+
+**Staff task assignment**
+- assignedStaffId links reports to staff/security officers
+- Timeline entries for ASSIGNED, IN_PROGRESS, RESOLVED actions
+- Resolution notes and closure tracking (resolvedAt, closedAt timestamps)
+- Resident timeline filtering (filterTimelineForResident — hides internal staff notes)
+
+**Admin pages**
+- `/admin/reports` — Report list with status/category/priority filters, pagination
+- `/admin/reports/[id]` — Report detail with timeline, status transitions, staff assignment
+
+**Resident pages**
+- `/resident/reports` — Resident's own reports list
+- `/resident/reports/new` — Report creation form
+- `/resident/reports/[id]` — Report detail with filtered timeline
+
+### Verification
+- [x] TypeScript passes
+- [x] ESLint passes
+- [x] Vitest 71/71 passing (report transition tests added)
+- [x] Next.js build passes
+- [x] Prisma migration applied (Report, ReportTimeline models)
+- [x] Transition guards enforced server-side
+- [x] Resident timeline filtered server-side
+
+---
+
+## Milestone 8 — Events, Contacts, Information Pages, Governance
+
+**Status:** ✅ Complete
+
+**Commit:** `b21fffd`
+**Push:** ✅ `git push origin main`
+
+### Completed Features
+
+**Events**
+- Event model with lifecycle: DRAFT → ACTIVE → CANCELLED → COMPLETED
+- Capacity enforcement (optional; null/0 = unlimited)
+- Attendee tracking (EventAttendee model with CONFIRMED/ATTENDED/CANCELLED status)
+- Admin CRUD: create, edit, cancel, list with filters
+- Resident event list and detail with attendance registration
+- API: `GET /api/events`, `POST /api/events`, `GET/PATCH /api/events/[id]`, `POST /api/events/[id]/attend`
+
+**Important Contacts**
+- Categories: SECURITY, MANAGEMENT, CLEANING, TECHNICIAN, AMBULANCE, POLICE, FIRE_DEPARTMENT, OTHER
+- Visibility levels: PUBLIC, RESIDENTS_ONLY, STAFF_ONLY, ADMIN_ONLY
+- Phone normalization (08xxx → 628xxx, strip non-digits)
+- Admin CRUD with visibility/category sorting
+- Resident contact list (filtered by visibility)
+- API: `GET /api/contacts`, `POST /api/admin/contacts`, `GET/PATCH /api/admin/contacts/[id]`
+
+**Information Pages**
+- Slug-based routing with content sanitization (XSS prevention)
+- Categories, DRAFT/PUBLISHED/ARCHIVED status
+- Visibility: PUBLIC, RESIDENTS_ONLY, STAFF_ONLY, ADMIN_ONLY
+- Admin CRUD with publisher tracking
+- Resident info page listing and detail by slug
+- API: `GET /api/info`, `GET /api/info/[slug]`, `POST/PATCH /api/admin/info`, `/api/admin/info/[id]`
+
+**Governance Documents**
+- Types: MINUTES, DECISION, POLICY
+- Approval workflow: DRAFT → PENDING → APPROVED → REJECTED
+- Supersede chain: old record links to new via supersededById, revision number increments
+- History preservation (superseded records are not deleted)
+- Visibility controls per content
+- Admin CRUD with publish/revision management
+- Resident governance listing and detail
+- API: `GET /api/governance`, `GET/PATCH /api/admin/governance/[id]`, `/api/admin/governance`
+
+**Schema Enhancement**
+- Migration `enhance_info_governance` adds InformationPage and GovernanceDocument models
+- ContentVisibility enum (PUBLIC, RESIDENTS_ONLY, STAFF_ONLY, ADMIN_ONLY)
+- InfoPageStatus, GovernanceType, ApprovalStatus enums
+
+### Verification
+- [x] TypeScript passes
+- [x] ESLint passes
+- [x] Vitest passing (event, contact, info-page, governance tests)
+- [x] Next.js build passes
+- [x] Prisma migration applied
+- [x] Capacity enforcement tested
+- [x] Contact visibility enforced server-side
+- [x] Info page slug uniqueness enforced
+- [x] Governance supersede chain validated
+
+---
+
+## Milestone 9 — Vehicles, Visitors, Packages
+
+**Status:** ✅ Complete
+
+**Commit:** `2bf1c4c`
+**Push:** ✅ `git push origin main`
+
+### Completed Features
+
+**Vehicles**
+- Vehicle model with types: MOTORCYCLE, CAR, TRUCK, OTHER
+- License plate normalization (uppercase, strip whitespace)
+- Status: ACTIVE, INACTIVE, EXPIRED, SUSPENDED
+- Household and resident association
+- Sticker number tracking with validity dates
+- Admin CRUD with list/detail views
+- Resident vehicle registration and listing
+- API: `GET /api/vehicles`, `POST /api/vehicles`, `GET/PATCH /api/vehicles/[id]`
+- API: `GET /api/admin/vehicles` (admin list), `POST/PATCH /api/admin/vehicles/[id]`
+
+**Visitors**
+- Visitor model with code-based access (8-char uppercase alphanumeric via crypto.randomBytes)
+- Status flow: PENDING → APPROVED → ACTIVE → COMPLETED/EXPIRED/REJECTED
+- Check-in/check-out tracking with timestamps
+- Visit code generation (non-sequential, non-guessable)
+- Expiry enforcement (isExpired check)
+- Household, license plate, and destination unit tracking
+- Admin visitor management with status transitions
+- Resident visitor registration and list
+- Visitor lookup by code
+- API: `GET /api/visitors`, `POST /api/visitors`, `GET/PATCH /api/visitors/[id]`
+- API: `GET /api/visitors/lookup` (code-based lookup)
+
+**Packages**
+- Package model with status: ARRIVED → NOTIFIED → PICKED_UP (terminal), also RETURNED, EXPIRED
+- Status transition validation (assertTransition — no skipping NOTIFIED)
+- Recipient name, courier tracking, arrival/pickup timestamps
+- Evidence key for package photos
+- Household scoping (residents see only own household packages)
+- Admin package management with status updates
+- Resident package list
+- API: `GET /api/packages`, `POST /api/packages`, `GET/PATCH /api/packages/[id]`
+- API: `GET /api/admin/packages` (admin list)
+
+**Seed Data**
+- Vehicles: 4 sample vehicles across 2 households (2 cars, 2 motorcycles)
+- Visitors: PENDING visitor for demo household
+- Packages: 3 packages (ARRIVED, NOTIFIED, PICKED_UP) for demo household
+
+### Verification
+- [x] TypeScript passes
+- [x] ESLint passes
+- [x] Vitest 121/121 passing (vehicle, visitor, package tests)
+- [x] Next.js build passes
+- [x] Prisma migration applied
+- [x] Visit code uniqueness verified
+- [x] Package status transitions enforced
+- [x] Household scoping enforced for packages
+- [x] License plate normalization tested
+- [x] Visitor expiry validated
+
+---
+
+## Project Summary
+
+| Milestone | Status | Commit | Tests |
+|-----------|--------|--------|-------|
+| M0 — Repository Foundation | ✅ | `5edc0bc` | — |
+| M1 — Config & Design System | ✅ | `e160671` | — |
+| M2 — Auth, Users, Roles, Audit | ✅ | `e230c1c` | 17 |
+| M3 — Blocks & Residential Units | ✅ | `b3671b2` | 23 |
+| M4 — Households & Residents | ✅ | `1b41c73` | 43 |
+| M5 — Private Resident Documents | ✅ | `6939477` | 43 |
+| M6 — Resident Dashboard & Announcements | ✅ | `abf5acb` | 71 |
+| M7 — Reports & Staff Tasks | ✅ | `a0722ed` | 71 |
+| M8 — Events, Contacts, Info Pages, Governance | ✅ | `b21fffd` | 105+ |
+| M9 — Vehicles, Visitors, Packages | ✅ | `2bf1c4c` | 121 |
+
+**Overall:** 10/10 milestones complete. 121 tests passing. Build clean. Ready for audit.
