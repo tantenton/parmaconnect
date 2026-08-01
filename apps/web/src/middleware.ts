@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySessionToken } from "@/lib/auth/auth-service";
+import { verifySessionToken } from "@/lib/auth/middleware-auth";
 
 // Routes that don't require authentication
 const publicRoutes = [
