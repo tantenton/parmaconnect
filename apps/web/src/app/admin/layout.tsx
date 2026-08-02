@@ -8,9 +8,15 @@ const navItems = [
   { label: "Dasbor", href: "/admin", icon: "◉" },
   { label: "Blok", href: "/admin/blocks", icon: "⊞" },
   { label: "Unit Rumah", href: "/admin/units", icon: "⌂" },
+  { label: "Keluarga", href: "/admin/households", icon: "⌬" },
   { label: "Warga", href: "/admin/residents", icon: "◎" },
   { label: "Dokumen", href: "/admin/documents", icon: "□" },
   { label: "Tagihan", href: "/admin/billing", icon: "₨" },
+  { label: "Pengumuman", href: "/admin/announcements", icon: "▤" },
+  { label: "Laporan", href: "/admin/reports", icon: "▣" },
+  { label: "Acara", href: "/admin/events", icon: "◐" },
+  { label: "Kontak", href: "/admin/contacts", icon: "✆" },
+  { label: "Informasi", href: "/admin/governance", icon: "✦" },
 ];
 
 function Sidebar({ close }: { close?: () => void }) {
