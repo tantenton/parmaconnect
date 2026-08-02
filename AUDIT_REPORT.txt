@@ -1,218 +1,68 @@
-══════════════════════════════════════════════════════════════
-  PARMACONNECT — FULL PROJECT AUDIT REPORT
-  Generated: 2026-07-27 18:36 UTC
-  Repository: github.com/tantenton/parmaconnect
-  Branch: main
-  Final commit: e93c289
-══════════════════════════════════════════════════════════════
+# ParmaConnect — Local Audit Report
 
-1. PROJECT OVERVIEW
-══════════════════
+## Environment
+- Host: Windows 10 (Lenovo laptop, resource-constrained: 1 cmd at a time, NODE_OPTIONS=--max-old-space-size=2048, TURBO_CONCURRENCY=1)
+- Node: v24.18.0
+- pnpm: v9.15.9
+- GitHub auth: HTTPS + PAT, full access verified
 
-ParmaConnect is a multi-tenant community management platform for
-Indonesian residential communities (perumahan/kompleks). Built with
-Next.js 16, Prisma 7, PostgreSQL, and TypeScript.
+## Repository State (pre-audit)
+- Repo: https://github.com/tantenton/parmaconnect
+- Branch: main @ eb32000
+- 18 commits, 1 branch, 0 untracked, 0 deleted
+- PROGRESS.md: 10/10 milestones complete (M0-M9), 121 tests claimed passing
 
-Stack:
-  - Framework: Next.js 16 (App Router)
-  - ORM: Prisma 7.9.0
-  - Database: PostgreSQL
-  - Language: TypeScript (strict)
-  - Testing: Vitest 4.1.10
-  - Linting: ESLint
-  - Build: next build
-  - Package Manager: pnpm
-  - Node: v22
+## Setup (local)
+1. `pnpm install --frozen-lockfile` — DONE (1m 30s)
+2. PostgreSQL 17-alpine via `docker compose -f docker/docker-compose.dev.yml up -d` — RUNNING (port 5432, named volume)
+3. `npx prisma migrate dev --name init` — 3 migrations applied (init, add_announcement_targets, enhance_info_governance)
+4. `npx prisma generate` — Client v7.9.0 generated
+5. `pnpm db:seed` — 21 users, 15 households, 15 residents, 3 announcements, 1 event, 4 contacts, 5 vehicles, 20 invoices, 3 reports, 3 visitors
 
-2. MILESTONE HISTORY
-════════════════════
+## Verification Gates (all PASS)
 
-M0 — Project Scaffold          5edc0bc  ✅
-  Initial Next.js + Prisma scaffold, full domain model, config system.
+| Gate | Result |
+|------|--------|
+| typecheck (`pnpm --filter web typecheck`) | PASS (0 errors) |
+| lint (`pnpm --filter web lint`) | PASS (0 errors, 18 pre-existing warnings) |
+| vitest (`pnpm --filter web test`) | 175/175 PASS (14 test files) |
+| next build (`pnpm --filter web build`) | PASS (all routes generated) |
+| prisma validate | PASS |
 
-M1 — Config, i18n, UI           e160671  ✅
-  Configuration system, internationalization, UI component library.
+## Critical Bug Found & Fixed
 
-M2 — Auth, Users, Roles         e230c1c  ✅
-  Authentication, user management, role-based access, audit logging.
+**Issue:** `node:path`/`node:url` modules in `apps/web/src/generated/prisma/client.ts` were being loaded into Edge Runtime via `middleware.ts` → `auth-service.ts` → `db.ts` (Prisma client). Every request triggered `Ecmascript file had an error`.
 
-M3 — Community, Blocks, Units   b3671b2  ✅
-  Community management, residential blocks, residential units.
+**Fix:** Created `apps/web/src/lib/auth/middleware-auth.ts` — pure JWT verification (jose + env, no Prisma import) for use by middleware only. Updated `apps/web/src/middleware.ts` to import from `middleware-auth.ts`.
 
-M4 — Households, Residents      1b41c73  ✅
-  Household administration, resident management, verification workflow.
+**Commit:** `7c4591e` — pushed to origin/main
 
-M5 — Documents                  6939477  ✅
-  Secure private resident document archive, verification workflow.
+## Local Runtime Verification
 
-M6 — Dashboard, Announcements   abf5acb  ✅
-  Resident dashboard, announcement system with audience/block targeting.
+After fix, dev server (`pnpm dev -p 3002`) returns 200 on:
 
-M7 — Reports, Staff Tasks       a0722ed  ✅
-  Resident reports, staff assignment, timeline tracking, status workflow.
+- `/api/health` — 200
+- `/api/auth/login` (admin@clusterparma.local / DevPassword123!) — 200
+- `/` — 200
+- `/auth/login` — 200
+- `/admin` — 200
+- `/admin/blocks`, `/admin/units`, `/admin/households`, `/admin/announcements`, `/admin/reports`, `/admin/events`, `/admin/contacts`, `/admin/governance` — all 200
+- `/resident/dashboard`, `/resident/reports`, `/resident/events`, `/resident/household`, `/resident/packages`, `/resident/vehicles`, `/resident/visitors` — all 200
 
-M8 — Events, Contacts, Info,    b21fffd  ✅
-Governance
-  Event management, important contacts, information pages, governance
-  archive with supersede/versioning.
+## Known Issues (still open from upstream KNOWN_ISSUES.md)
 
-M9 — Vehicles, Visitors,        2bf1c4c  ✅
-Packages (stretch)
-  Vehicle registration, visitor pre-registration with codes, package
-  tracking with security workflow.
+- Issue 4 — No CI/CD for Deployment (CD pipeline added in commit `eee9ac7`, requires secrets `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`)
+- Issue 5 — Limited test coverage (175 tests, no e2e)
+- Issue 7 — Middleware deprecated in Next.js 16 (deprecation warning logged, runtime crash fixed)
+- Issue 8 — No password reset email flow
+- Issue 10 — Package audit uses VEHICLE entity type
+- Issue 11 — Some UI pages may need pagination for large datasets
+- Issue 12 — ESLint warnings (18) from unused vars
 
-DOCS — Documentation Update     6fd088b  ✅
-  PROGRESS.md, DECISIONS.md, KNOWN_ISSUES.md, RUN_STATUS.txt updated.
+## Deploy
 
-TESTS — Test Expansion          e93c289  ✅
-  4 missing test files added: documents, events, governance,
-  package-authorization.
-
-3. FINAL VERIFICATION
-═════════════════════
-
-  TypeScript:     PASS (0 errors)
-  ESLint:         PASS (0 errors, 18 warnings)
-  Vitest:         PASS (14 files, 175 tests, 0 failures)
-  Next.js Build:  PASS (43+ API routes, 20+ pages)
-  Prisma:         PASS (schema valid, migrations applied)
-  Git Push:       PASS (origin/main aligned with local)
-
-4. TEST INVENTORY
-═════════════════
-
-  File                                    Tests
-  ─────────────────────────────────────   ─────
-  tests/lib/utils.test.ts                 6
-  tests/auth/auth.test.ts                 (auth)
-  tests/household/household.test.ts       (household)
-  tests/announcements/announcement.test.ts 28
-  tests/reports/report.test.ts            17
-  tests/contacts/contact.test.ts          7
-  tests/info-pages/info-page.test.ts      6
-  tests/visitors/visitor.test.ts          4
-  tests/vehicles/vehicle.test.ts          5
-  tests/packages/package.test.ts          11
-  tests/documents/document.test.ts        30
-  tests/events/event.test.ts              12
-  tests/governance/governance.test.ts     (governance)
-  tests/packages/package-authorization.test.ts (auth)
-  ─────────────────────────────────────   ─────
-  TOTAL                                   175 tests
-
-5. FEATURE INVENTORY
-════════════════════
-
-  Domain            Files  API Routes  UI Pages
-  ────────────────  ─────  ──────────  ────────
-  Auth & Users      ~10    4           3
-  Community         ~8     6           3
-  Households        ~8     4           3
-  Documents         ~6     2           2
-  Announcements     ~8     2           5
-  Reports           ~8     2           5
-  Events            ~8     3           5
-  Contacts          ~4     3           2
-  Info Pages        ~6     4           4
-  Governance        ~6     4           3
-  Vehicles          ~7     2           3
-  Visitors          ~8     3           3
-  Packages          ~6     2           2
-  ────────────────  ─────  ──────────  ────────
-  TOTAL             ~165   43          43+
-
-6. DATABASE MIGRATIONS
-══════════════════════
-
-  Migration                                    Milestone
-  ──────────────────────────────────────────   ─────────
-  initial                                       M0
-  add_auth_users_roles                          M2
-  add_community_blocks_units                    M3
-  add_households_residents                      M4
-  add_resident_documents                        M5
-  add_announcement_targets                      M6
-  enhance_info_governance                       M8
-
-7. KEY ARCHITECTURAL DECISIONS
-══════════════════════════════
-
-  AD-001: Multi-tenant via communityId on all models
-  AD-002: Role hierarchy: SUPER_ADMIN > ADMIN > DOCUMENT_ADMIN >
-          FINANCE_ADMIN > SECURITY_OFFICER > STAFF > RESIDENT
-  AD-003: AuditLog for all state changes
-  AD-004: Prisma client generated to src/generated/prisma
-  AD-005: Session-based auth (cookie), not JWT
-  AD-006: Indonesian as default UI language
-  AD-007: Centralized status transition validation
-  AD-008: Announcement audience targeting (ALL/RESIDENTS/STAFF/
-          SECURITY/FINANCE/ADMINS + block-level)
-  AD-009: Report lifecycle: NEW→VERIFIED→ASSIGNED→IN_PROGRESS→
-          RESOLVED→CLOSED (with REJECTED/DUPLICATE)
-  AD-010: Internal notes filtered from resident timeline
-  AD-011: Schema enhancement for InformationPage/GovernanceDocument
-  AD-012: 9router (bban/deepseek-v4-flash) for delegation over Holver
-  AD-013: Visitor codes via crypto.randomBytes (non-sequential)
-  AD-014: Package status: ARRIVED→NOTIFIED→PICKED_UP (terminal)
-
-8. KNOWN ISSUES
-═══════════════
-
-  1. Holver provider (api.holver-chat.web.id) not suitable for
-     delegation — backend imposes output limit causing truncation
-     even with max_output_tokens=65536 set.
-  2. Package audit uses VEHICLE entity type (AuditEntityType missing
-     PACKAGE enum value).
-  3. Some UI list pages lack pagination for large datasets.
-  4. 18 ESLint warnings (unused vars, minor style).
-  5. .next/types/validator.ts not found error on fresh tsc (needs
-     next build first — pre-existing, unrelated to code).
-
-9. DELEGATION SUMMARY
-═════════════════════
-
-  Provider: 9router (bban/deepseek-v4-flash)
-  Max concurrent: 2 (rate limit safety)
-  Max iterations: 80
-
-  Successful delegations:
-  - Vehicles: 7 files, 5 tests, 303s
-  - Visitors: 8 files, 4 tests, 300s
-  - Packages: 6 files, 11 tests, 273s
-  - Doc update: 4 files, 519s
-  - Test expansion: 4 files, 54 new tests, 253s
-
-  Failed delegations (Holver):
-  - 3/3 initial M8 batch: 429 rate limit + response truncation
-  - 2/2 M9 batch: response truncation (non-thinking model also affected)
-  - Root cause: Holver backend output limit, not fixable via config
-
-10. SECURITY REVIEW
-═══════════════════
-
-  - Access control: role-based (RESIDENT/STAFF/ADMIN)
-  - Community scope: all queries filtered by communityId
-  - Household scope: resident queries filtered by householdId
-  - IDOR: mitigated via server-side ownership checks
-  - XSS: content sanitization (script/iframe stripped) for info pages
-  - Sensitive data: resident sensitive identity in separate model
-  - Audit: all state changes logged via createAuditLog
-  - Visitor codes: non-sequential (crypto.randomBytes)
-  - Package evidence: authorization required
-
-11. RUN STATUS
-═════════════
-
-  RUN_STATUS: COMPLETED
-  LAST_COMPLETED_MILESTONE: 9 — Vehicles, Visitors, Packages
-  CURRENT_MILESTONE: none (all complete)
-  LAST_COMMIT: e93c289
-  PUSH_STATUS: pushed to origin/main
-  TEST_STATUS: 175/175 passed
-  BUILD_STATUS: passed
-  KNOWN_BLOCKER: none
-  NEXT_ACTION: project complete, ready for audit
-
-══════════════════════════════════════════════════════════════
-  END OF REPORT
-══════════════════════════════════════════════════════════════
+- `.github/workflows/deploy.yml` — Deploys to VPS via SSH + Docker Compose on push to main
+- Secrets required (set in GitHub repo Settings → Secrets and variables → Actions):
+  - `VPS_HOST` — VPS hostname/IP
+  - `VPS_USER` — SSH user (default: ubuntu)
+  - `VPS_SSH_KEY` — SSH private key
